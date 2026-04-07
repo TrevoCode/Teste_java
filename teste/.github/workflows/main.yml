@@ -7,15 +7,37 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
-      - name: Set up JDK
+
+      - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
-      - name: Build
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Stage 1 - Build
         run: mvn clean compile
-      - name: Test
+
+      - name: Stage 2 - Test & Validação
+        # Aqui ele vai rodar o seu TesteF.java e vai dar o erro vermelho (que é o que você quer!)
         run: mvn test
+
+      - name: Stage 3 - Gerar Relatório JUnit
+        # O 'if: always()' garante que o relatório suba mesmo quando o teste falha
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: relatorio-testes
+          path: target/surefire-reports/*.xml
+
+      - name: Stage 4 - Deploy (Simulado)
+        # Só roda se os testes passarem e estiver na branch main
+        if: success() && github.ref == 'refs/heads/main'
+        run: |
+          echo "Realizando deploy automático..."
+          echo "Aplicação validada com sucesso!"
